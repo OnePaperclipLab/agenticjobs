@@ -89,6 +89,9 @@ export async function searchEverywhere(
           const client = new BoardClient(board.server, {
             token: board.token,
             timeoutMs: remainingMs,
+            // This attempt already has the board's entire remaining budget.
+            // A cold-start retry would reset its timer and exceed that deadline.
+            retryTimeouts: false,
           });
           const page = await client.search({ ...query, limit: pageLimit, offset: sourceOffset });
           if (Date.now() - started >= budgetMs) {

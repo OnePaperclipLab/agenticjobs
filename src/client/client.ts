@@ -102,6 +102,8 @@ export interface ClientOptions {
   token?: string | null;
   fetch?: typeof fetch;
   timeoutMs?: number;
+  /** Disable timeout retries when a caller manages a shared overall deadline. */
+  retryTimeouts?: boolean;
   userAgent?: string;
 }
 
@@ -167,6 +169,7 @@ export class BoardClient {
   private token: string | null;
   private readonly doFetch: typeof fetch;
   private readonly timeoutMs: number;
+  private readonly retryTimeouts: boolean;
   private readonly userAgent: string;
 
   constructor(server: string, options: ClientOptions = {}) {
@@ -174,6 +177,7 @@ export class BoardClient {
     this.token = options.token ?? null;
     this.doFetch = options.fetch ?? fetch;
     this.timeoutMs = options.timeoutMs ?? 20_000;
+    this.retryTimeouts = options.retryTimeouts ?? true;
     this.userAgent = options.userAgent ?? 'agenticjobs-client';
   }
 
@@ -217,7 +221,12 @@ export class BoardClient {
       // carries an idempotency key: then the board answers a repeat with
       // the row the first attempt made, and repeating is the point.
       const repeatable = method === 'GET' || options.idempotencyKey !== undefined;
-      if (repeatable && error instanceof ApiError && error.code === 'timeout') {
+      if (
+        this.retryTimeouts &&
+        repeatable &&
+        error instanceof ApiError &&
+        error.code === 'timeout'
+      ) {
         return this.requestOnce<T>(method, path, body, options);
       }
       throw error;
