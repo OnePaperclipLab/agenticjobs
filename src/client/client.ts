@@ -220,7 +220,9 @@ export class BoardClient {
       // about a second. GET is safe to repeat. A POST is not, unless it
       // carries an idempotency key: then the board answers a repeat with
       // the row the first attempt made, and repeating is the point.
-      const repeatable = method === 'GET' || options.idempotencyKey !== undefined;
+      // Empty (including HTTP-trimmed whitespace) headers are treated as no
+      // key by the server, so they cannot make a write safe to repeat.
+      const repeatable = method === 'GET' || Boolean(options.idempotencyKey?.trim());
       if (
         this.retryTimeouts &&
         repeatable &&
