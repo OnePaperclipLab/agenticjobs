@@ -698,18 +698,14 @@ export class BoardClient {
 
   async searchNetwork(query: Partial<JobQuery>): Promise<unknown> {
     const params = queryToParams({
-      q: null,
-      employmentType: null,
-      workplace: null,
-      seniority: null,
-      agentPolicy: null,
-      tags: [],
-      salaryMin: null,
-      org: null,
-      sort: 'recent',
-      limit: 25,
-      offset: 0,
+      ...EMPTY_QUERY,
       ...query,
+      // Match search(): explicitly undefined filters must not erase defaults.
+      tags: query.tags ?? EMPTY_QUERY.tags,
+      salaryMin: query.salaryMin ?? EMPTY_QUERY.salaryMin,
+      sort: query.sort ?? EMPTY_QUERY.sort,
+      limit: query.limit ?? EMPTY_QUERY.limit,
+      offset: query.offset ?? EMPTY_QUERY.offset,
     });
     const search = params.toString();
     return this.request('GET', `/api/v1/directory/search${search === '' ? '' : `?${search}`}`);
