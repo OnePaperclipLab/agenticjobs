@@ -27,7 +27,7 @@ function firstHeading(text: string): { title: string; start: number; end: number
         const run = opening[1] ?? '```';
         fence = { marker: run[0] ?? '`', length: run.length };
       } else {
-        const heading = /^#\s+(.+)$/.exec(line);
+        const heading = /^ {0,3}#\s+(.+)$/.exec(line);
         if (heading !== null) {
           // A closing run of hashes after a space, or a heading made only of
           // them, is heading syntax, as the Markdown renderer reads it; a hash
