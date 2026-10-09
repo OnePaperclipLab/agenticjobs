@@ -58,7 +58,9 @@ export function parseJobDocument(source: string): JobDocument {
   }
 
   const front = parseFrontMatter(match[1] ?? '');
-  const body = text.slice(match[0].length).trim();
+  // Remove blank opening lines without turning indented code into a heading
+  // or a code fence. Indentation on the first content line is Markdown syntax.
+  const body = text.slice(match[0].length).replace(/^(?:[ \t]*\n)+/, '').trimEnd();
   const heading = firstHeading(body);
   const title = front['title'] ?? heading?.title;
   let description = body;
