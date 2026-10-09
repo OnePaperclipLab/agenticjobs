@@ -41,12 +41,19 @@ const BOOLEAN_FLAGS = new Set([
   'read',
 ]);
 
-function takesValue(name: string, next: string | undefined): next is string {
+function takesValue(
+  name: string,
+  next: string | undefined,
+  command: string | undefined,
+): next is string {
   const negativeNumber = next !== undefined && /^-\d+(?:\.\d+)?$/.test(next);
+  // `news --candidate <slug>` filters the feed; other commands use the same
+  // option as a boolean switch between employer and candidate subjects.
+  const boolean = BOOLEAN_FLAGS.has(name) && !(command === 'news' && name === 'candidate');
   return (
     next !== undefined &&
     (!next.startsWith('-') || negativeNumber) &&
-    (!BOOLEAN_FLAGS.has(name) || /^(true|false|1|0|yes|no)$/i.test(next))
+    (!boolean || /^(true|false|1|0|yes|no)$/i.test(next))
   );
 }
 
@@ -75,7 +82,7 @@ export function parseArgs(argv: string[]): Args {
         continue;
       }
       const next = argv[index + 1];
-      if (takesValue(body, next)) {
+      if (takesValue(body, next, positional[0])) {
         set(flags, body, next);
         index += 1;
         continue;
@@ -87,7 +94,7 @@ export function parseArgs(argv: string[]): Args {
     if (token.startsWith('-') && token.length > 1) {
       const body = token.slice(1);
       const next = argv[index + 1];
-      if (takesValue(body, next)) {
+      if (takesValue(body, next, positional[0])) {
         set(flags, body, next);
         index += 1;
         continue;
