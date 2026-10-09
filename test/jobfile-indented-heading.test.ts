@@ -41,3 +41,41 @@ test('an explicit front matter title preserves an indented body heading', () => 
     description: body,
   });
 });
+
+test('leading indented code after front matter stays code, even after blank lines', () => {
+  for (const indent of ['    ', '\t']) {
+    const body = `${indent}# Example only\n\nRole details`;
+    for (const padding of ['', '\n \t\n']) {
+      assert.deepEqual(parseJobDocument(`---\norg: acme\n---\n${padding}${body}\n\n`), {
+        org: 'acme',
+        description: body,
+      });
+    }
+  }
+});
+
+test('the real title after leading indented code is extracted without deleting the example', () => {
+  const body = '    # Example only\n\n  # Actual role\n\nRole details';
+  assert.deepEqual(parseJobDocument(`---\norg: acme\n---\n${body}`), {
+    org: 'acme',
+    title: 'Actual role',
+    description: '    # Example only\n\nRole details',
+  });
+});
+
+test('an indented code-fence example does not hide the real title', () => {
+  const body = '    ```md\n\n  # Actual role\n\nRole details';
+  assert.deepEqual(parseJobDocument(`---\norg: acme\n---\n${body}`), {
+    org: 'acme',
+    title: 'Actual role',
+    description: '    ```md\n\nRole details',
+  });
+});
+
+test('explicit front matter titles retain initial body indentation', () => {
+  const body = '    # Example only\n\nRole details';
+  assert.deepEqual(parseJobDocument(`---\ntitle: Explicit role\n---\n${body}`), {
+    title: 'Explicit role',
+    description: body,
+  });
+});
